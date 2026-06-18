@@ -5,6 +5,9 @@
 #include <vector>
 
 class BinaryTree {
+public:
+    enum class Order { Inorder, Preorder, Postorder };
+
 private:
     struct Node {
         int value;
@@ -16,6 +19,10 @@ private:
     };
 
     std::unique_ptr<Node> root;
+
+    static void emitValues(const Node* node, std::vector<int>& out) {
+        for (int i = 0; i < node->count; ++i) out.push_back(node->value);
+    }
 
     static void insert(std::unique_ptr<Node>& node, int value) {
         if (!node) {
@@ -39,25 +46,13 @@ private:
         return true;
     }
 
-    static void inorder(const Node* node, std::vector<int>& out) {
+    static void traverse(const Node* node, std::vector<int>& out, Order order) {
         if (!node) return;
-        inorder(node->left.get(), out);
-        for (int i = 0; i < node->count; ++i) out.push_back(node->value);
-        inorder(node->right.get(), out);
-    }
-
-    static void preorder(const Node* node, std::vector<int>& out) {
-        if (!node) return;
-        for (int i = 0; i < node->count; ++i) out.push_back(node->value);
-        preorder(node->left.get(), out);
-        preorder(node->right.get(), out);
-    }
-
-    static void postorder(const Node* node, std::vector<int>& out) {
-        if (!node) return;
-        postorder(node->left.get(), out);
-        postorder(node->right.get(), out);
-        for (int i = 0; i < node->count; ++i) out.push_back(node->value);
+        if (order == Order::Preorder) emitValues(node, out);
+        traverse(node->left.get(), out, order);
+        if (order == Order::Inorder) emitValues(node, out);
+        traverse(node->right.get(), out, order);
+        if (order == Order::Postorder) emitValues(node, out);
     }
 
 public:
@@ -67,23 +62,15 @@ public:
 
     [[nodiscard]] bool empty() const { return root == nullptr; }
 
-    [[nodiscard]] std::vector<int> inorder() const {
+    [[nodiscard]] std::vector<int> traverse(Order order) const {
         std::vector<int> out;
-        inorder(root.get(), out);
+        traverse(root.get(), out, order);
         return out;
     }
 
-    [[nodiscard]] std::vector<int> preorder() const {
-        std::vector<int> out;
-        preorder(root.get(), out);
-        return out;
-    }
-
-    [[nodiscard]] std::vector<int> postorder() const {
-        std::vector<int> out;
-        postorder(root.get(), out);
-        return out;
-    }
+    [[nodiscard]] std::vector<int> inorder() const { return traverse(Order::Inorder); }
+    [[nodiscard]] std::vector<int> preorder() const { return traverse(Order::Preorder); }
+    [[nodiscard]] std::vector<int> postorder() const { return traverse(Order::Postorder); }
 
     [[nodiscard]] std::vector<int> levelOrder() const {
         std::vector<int> out;
@@ -96,7 +83,7 @@ public:
             const Node* cur = q.front();
             q.pop();
 
-            for (int i = 0; i < cur->count; ++i) out.push_back(cur->value);
+            emitValues(cur, out);
 
             if (cur->left) q.push(cur->left.get());
             if (cur->right) q.push(cur->right.get());
