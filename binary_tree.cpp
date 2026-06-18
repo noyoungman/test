@@ -1,7 +1,8 @@
-#include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <queue>
+#include <stdexcept>
 #include <vector>
 
 class BinaryTree {
@@ -110,34 +111,51 @@ static void printVector(const char* label, const std::vector<int>& values) {
     std::cout << label;
     for (int v : values) std::cout << v << ' ';
     std::cout << '\n';
+
+    if (!std::cout) {
+        throw std::runtime_error(
+            std::string("failed to write output for: ") + label);
+    }
+}
+
+static void check(bool condition, const char* message) {
+    if (!condition) {
+        throw std::logic_error(message);
+    }
 }
 
 int main() {
-    BinaryTree tree;
-    assert(tree.empty());
+    try {
+        BinaryTree tree;
+        check(tree.empty(), "new tree should be empty");
 
-    const int values[] = {8, 3, 10, 1, 6, 14, 4, 7, 13, 6, 3};
-    for (int v : values) tree.insert(v);
+        const int values[] = {8, 3, 10, 1, 6, 14, 4, 7, 13, 6, 3};
+        for (int v : values) tree.insert(v);
 
-    assert(!tree.empty());
-    assert(tree.contains(7));
-    assert(tree.contains(6));
-    assert(!tree.contains(99));
+        check(!tree.empty(), "tree should not be empty after inserts");
+        check(tree.contains(7), "tree should contain 7");
+        check(tree.contains(6), "tree should contain 6");
+        check(!tree.contains(99), "tree should not contain 99");
 
-    const auto in = tree.inorder();
-    const auto pre = tree.preorder();
-    const auto post = tree.postorder();
-    const auto level = tree.levelOrder();
+        const auto in = tree.inorder();
+        const auto pre = tree.preorder();
+        const auto post = tree.postorder();
+        const auto level = tree.levelOrder();
 
-    assert((in == std::vector<int>{1, 3, 3, 4, 6, 6, 7, 8, 10, 13, 14}));
-    assert(pre.size() == in.size());
-    assert(post.size() == in.size());
-    assert(level.size() == in.size());
+        check(in == (std::vector<int>{1, 3, 3, 4, 6, 6, 7, 8, 10, 13, 14}),
+              "inorder traversal mismatch");
+        check(pre.size() == in.size(), "preorder size mismatch");
+        check(post.size() == in.size(), "postorder size mismatch");
+        check(level.size() == in.size(), "level-order size mismatch");
 
-    printVector("Inorder: ", in);
-    printVector("Preorder: ", pre);
-    printVector("Postorder: ", post);
-    printVector("Level order: ", level);
+        printVector("Inorder: ", in);
+        printVector("Preorder: ", pre);
+        printVector("Postorder: ", post);
+        printVector("Level order: ", level);
 
-    return 0;
+        return EXIT_SUCCESS;
+    } catch (const std::exception& e) {
+        std::cerr << "error: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
